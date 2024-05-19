@@ -6,18 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNew(t *testing.T) { //nolint:funlen
+func TestNew(t *testing.T) {
 	type args struct {
-		level Level
-		args  []Args
+		level         Level
+		configurators []Configurators
 	}
 	type expectedResult struct {
-		loggerLevel   Level
-		loggerDebugFn bool
-		loggerInfoFn  bool
-		loggerWarnFn  bool
-		loggerErrorFn bool
-		err           error
+		loggerLevel Level
+		err         error
 	}
 
 	tests := []struct {
@@ -29,40 +25,32 @@ func TestNew(t *testing.T) { //nolint:funlen
 			name: "checking standard behavior",
 			args: args{
 				level: Error,
-				args: []Args{
+				configurators: []Configurators{
 					PrintToConsoleDebugFn, PrintToConsoleInfoFn, PrintToConsoleWarnFn, PrintToConsoleErrorFn,
 				},
 			},
 			expectedResult: expectedResult{
-				loggerLevel:   Error,
-				loggerDebugFn: true,
-				loggerInfoFn:  true,
-				loggerWarnFn:  true,
-				loggerErrorFn: true,
-				err:           nil,
+				loggerLevel: Error,
+				err:         nil,
 			},
 		},
 		{
 			name: "checking invalid level",
 			args: args{
 				level: Level(10),
-				args: []Args{
+				configurators: []Configurators{
 					PrintToConsoleDebugFn, PrintToConsoleInfoFn, PrintToConsoleWarnFn, PrintToConsoleErrorFn,
 				},
 			},
 			expectedResult: expectedResult{
-				loggerLevel:   Non,
-				loggerDebugFn: false,
-				loggerInfoFn:  false,
-				loggerWarnFn:  false,
-				loggerErrorFn: false,
-				err:           ErrLevelInvalid,
+				loggerLevel: Non,
+				err:         ErrLevelInvalid,
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			logger, err := New(test.args.level, test.args.args...)
+			logger, err := New(test.args.level, test.args.configurators...)
 
 			if test.expectedResult.err != nil {
 				assert.ErrorIs(t, err, test.expectedResult.err, "The received error does not match the expected one")
@@ -72,22 +60,6 @@ func TestNew(t *testing.T) { //nolint:funlen
 				assert.EqualValues(
 					t, test.expectedResult.loggerLevel, logger.level,
 					"Level's value don't equal",
-				)
-				assert.EqualValues(
-					t, test.expectedResult.loggerDebugFn, logger.DebugFn != nil,
-					"DebugFn's value don't equal",
-				)
-				assert.EqualValues(
-					t, test.expectedResult.loggerInfoFn, logger.InfoFn != nil,
-					"InfoFn's value don't equal",
-				)
-				assert.EqualValues(
-					t, test.expectedResult.loggerWarnFn, logger.WarnFn != nil,
-					"WarnFn's value don't equal",
-				)
-				assert.EqualValues(
-					t, test.expectedResult.loggerErrorFn, logger.ErrorFn != nil,
-					"ErrorFn's value don't equal",
 				)
 			}
 		})
@@ -113,15 +85,9 @@ func TestDebug(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Debug,
-				DebugFn: func(li LogInfo) {
-					assert.EqualValues(
-						t,
-						LogInfo{
-							Msg:  "Test",
-							Data: map[string]any{"one": 1},
-						},
-						li,
-					)
+				debugFn: func(msg string, data map[string]any) {
+					assert.EqualValues(t, "Test", msg)
+					assert.EqualValues(t, map[string]any{"one": 1}, data)
 				},
 			},
 		},
@@ -143,7 +109,7 @@ func TestDebug(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Info,
-				DebugFn: func(li LogInfo) {
+				debugFn: func(_ string, _ map[string]any) {
 					assert.Fail(t, "Unexpected call to logger.DebugFn")
 				},
 			},
@@ -175,15 +141,9 @@ func TestInfo(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Info,
-				InfoFn: func(li LogInfo) {
-					assert.EqualValues(
-						t,
-						LogInfo{
-							Msg:  "Test",
-							Data: map[string]any{"one": 1},
-						},
-						li,
-					)
+				infoFn: func(msg string, data map[string]any) {
+					assert.EqualValues(t, "Test", msg)
+					assert.EqualValues(t, map[string]any{"one": 1}, data)
 				},
 			},
 		},
@@ -205,7 +165,7 @@ func TestInfo(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Warn,
-				InfoFn: func(li LogInfo) {
+				infoFn: func(_ string, _ map[string]any) {
 					assert.Fail(t, "Unexpected call to logger.InfoFn")
 				},
 			},
@@ -237,15 +197,9 @@ func TestWarn(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Warn,
-				WarnFn: func(li LogInfo) {
-					assert.EqualValues(
-						t,
-						LogInfo{
-							Msg:  "Test",
-							Data: map[string]any{"one": 1},
-						},
-						li,
-					)
+				warnFn: func(msg string, data map[string]any) {
+					assert.EqualValues(t, "Test", msg)
+					assert.EqualValues(t, map[string]any{"one": 1}, data)
 				},
 			},
 		},
@@ -267,7 +221,7 @@ func TestWarn(t *testing.T) { //nolint:dupl
 			},
 			logger: &Logger{
 				level: Error,
-				WarnFn: func(li LogInfo) {
+				warnFn: func(_ string, _ map[string]any) {
 					assert.Fail(t, "Unexpected call to logger.WarnFn")
 				},
 			},
@@ -299,15 +253,9 @@ func TestError(t *testing.T) {
 			},
 			logger: &Logger{
 				level: Error,
-				ErrorFn: func(li LogInfo) {
-					assert.EqualValues(
-						t,
-						LogInfo{
-							Msg:  "Test",
-							Data: map[string]any{"one": 1},
-						},
-						li,
-					)
+				errorFn: func(msg string, data map[string]any) {
+					assert.EqualValues(t, "Test", msg)
+					assert.EqualValues(t, map[string]any{"one": 1}, data)
 				},
 			},
 		},
@@ -329,7 +277,7 @@ func TestError(t *testing.T) {
 			},
 			logger: &Logger{
 				level: Level(5),
-				ErrorFn: func(li LogInfo) {
+				errorFn: func(_ string, _ map[string]any) {
 					assert.Fail(t, "Unexpected call to logger.ErrorFn")
 				},
 			},

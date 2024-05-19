@@ -7,41 +7,33 @@ import (
 )
 
 func TestPrintToConsoleDebugFn(t *testing.T) {
-	logger := Logger{
-		level: Debug,
-	}
+	config := Config{}
 
-	PrintToConsoleDebugFn(&logger)
-	require.NotNil(t, logger.DebugFn)
-	logger.DebugFn(LogInfo{"test debug level", nil})
+	PrintToConsoleDebugFn(&config)
+	require.NotNil(t, config.DebugFn)
+	config.DebugFn("test debug level", nil)
 }
 
 func TestPrintToConsoleInfoFn(t *testing.T) {
-	logger := Logger{
-		level: Debug,
-	}
+	config := Config{}
 
-	PrintToConsoleInfoFn(&logger)
-	require.NotNil(t, logger.InfoFn)
-	logger.InfoFn(LogInfo{"test info level", nil})
+	PrintToConsoleInfoFn(&config)
+	require.NotNil(t, config.InfoFn)
+	config.InfoFn("test info level", nil)
 }
 
 func TestPrintToConsoleWarnFn(t *testing.T) {
-	logger := Logger{
-		level: Debug,
-	}
+	config := Config{}
 
-	PrintToConsoleWarnFn(&logger)
-	require.NotNil(t, logger.WarnFn)
-	logger.WarnFn(LogInfo{"test warn level", nil})
+	PrintToConsoleWarnFn(&config)
+	require.NotNil(t, config.WarnFn)
+	config.WarnFn("test warn level", nil)
 }
 
 func TestPrintToConsoleErrorFn(t *testing.T) {
-	logger := Logger{
-		level: Debug,
-	}
+	config := Config{}
 
-	PrintToConsoleErrorFn(&logger)
-	require.NotNil(t, logger.ErrorFn)
-	logger.ErrorFn(LogInfo{"test error level", nil})
+	PrintToConsoleErrorFn(&config)
+	require.NotNil(t, config.ErrorFn)
+	config.ErrorFn("test error level", nil)
 }
